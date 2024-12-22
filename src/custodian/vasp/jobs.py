@@ -272,7 +272,7 @@ class VaspJob(Job):
             open(os.path.join(directory, self.stderr_file), "w", buffering=1) as f_err,
         ):
             # use line buffering for stderr
-            return subprocess.Popen(cmd, cwd=directory, stdout=f_std, stderr=f_err, start_new_session=True)
+            return subprocess.Popen(cmd, cwd=directory, stdout=f_std, stderr=f_err, start_new_session=False)
             # pylint: disable=R1732
 
     def postprocess(self, directory="./") -> None:
@@ -915,7 +915,7 @@ class VaspNEBJob(VaspJob):
                 cwd=directory,
                 stdout=f_std,
                 stderr=f_err,
-                start_new_session=True,
+                start_new_session=False,
             )  # pylint: disable=R1732
 
     def postprocess(self, directory="./") -> None:
