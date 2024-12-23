@@ -272,7 +272,9 @@ class VaspJob(Job):
             open(os.path.join(directory, self.stderr_file), "w", buffering=1) as f_err,
         ):
             # use line buffering for stderr
-            return subprocess.Popen(cmd, cwd=directory, stdout=f_std, stderr=f_err, start_new_session=False)
+            p = subprocess.Popen(cmd, cwd=directory, stdout=f_std, stderr=f_err, start_new_session=False)
+            p.wait()
+            return p
             # pylint: disable=R1732
 
     def postprocess(self, directory="./") -> None:
@@ -910,13 +912,15 @@ class VaspNEBJob(VaspJob):
             open(os.path.join(directory, self.stderr_file), "w", buffering=1) as f_err,
         ):
             # Use line buffering for stderr
-            return subprocess.Popen(
+            p = subprocess.Popen(
                 cmd,
                 cwd=directory,
                 stdout=f_std,
                 stderr=f_err,
                 start_new_session=False,
             )  # pylint: disable=R1732
+            p.wait()
+            return p
 
     def postprocess(self, directory="./") -> None:
         """Postprocessing includes renaming and gzipping where necessary."""

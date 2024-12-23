@@ -469,32 +469,35 @@ class Custodian:
             # While the job is running, we use the handlers that are
             # monitors to monitor the job.
             if isinstance(p, subprocess.Popen):
-                if self.monitors:
-                    n = 0
-                    while True:
-                        n += 1
-                        time.sleep(self.polling_time_step)
-                        # We poll the process p to check if it is still running.
-                        # Note that the process here is not the actual calculation
-                        # but whatever is used to control the execution of the
-                        # calculation executable. For instance; mpirun, srun, and so on.
-                        if p.poll() is not None:
-                            break
-                        if n % self.monitor_freq == 0:
-                            # At every self.polling_time_step * self.monitor_freq seconds,
-                            # we check the job for errors using handlers that are monitors.
-                            # In order to properly kill a running calculation, we use
-                            # the appropriate implementation of terminate.
-                            has_error = self._do_check(self.monitors, terminate)
-                else:
-                    p.wait()
-                    if self.terminate_func is not None and self.terminate_func != p.terminate:
-                        self.terminate_func()
-                        time.sleep(self.polling_time_step)
+                try:
+                    if self.monitors:
+                        n = 0
+                        while True:
+                            n += 1
+                            time.sleep(self.polling_time_step)
+                            # We poll the process p to check if it is still running.
+                            # Note that the process here is not the actual calculation
+                            # but whatever is used to control the execution of the
+                            # calculation executable. For instance; mpirun, srun, and so on.
+                            if p.poll() is not None:
+                                break
+                            if n % self.monitor_freq == 0:
+                                # At every self.polling_time_step * self.monitor_freq seconds,
+                                # we check the job for errors using handlers that are monitors.
+                                # In order to properly kill a running calculation, we use
+                                # the appropriate implementation of terminate.
+                                has_error = self._do_check(self.monitors, terminate)
+                    else:
+                        p.wait()
+                        if self.terminate_func is not None and self.terminate_func != p.terminate:
+                            self.terminate_func()
+                            time.sleep(self.polling_time_step)
 
-                zero_return_code = p.returncode == 0
+                    zero_return_code = p.returncode == 0
+                except Exception as e:
+                    has_error = True
+                    logger.error(f"Error during job execution: {e}")
 
-            logger.info(f"{job.name}.run has completed. Checking remaining handlers")
             # Check for errors again, since in some cases non-monitor
             # handlers fix the problems detected by monitors
             # if an error has been found, not all handlers need to run
